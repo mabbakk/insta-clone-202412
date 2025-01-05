@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/instagram-clone
+    url: jdbc:mariadb://localhost:3306/instagram_clone
     username: root
     password: mariadb
   mvc:
@@ -30,4 +30,4 @@ logging:
 
 file:
   upload:
-    location: ${user.home}/instagram/uploads/
+    location: ${user.home}/instagram-clone/uploads/
