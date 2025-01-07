@@ -24,15 +24,22 @@ class HashtagSearch {
             const currentCursorPosition = e.target.selectionStart;
             // console.log(currentCursorPosition);
 
-            const hastagMatch = this.findHashtagAtCursor(text, currentCursorPosition);
+            const hashtagMatch = this.findHashtagAtCursor(text, currentCursorPosition);
 
-            if (hastagMatch) {
+            if (hashtagMatch) {
                 // 서버에 검색요청 보내기 - 디바운스 적용
                 clearTimeout(this.searchTimeout);
 
                 this.searchTimeout = setTimeout(() => {
-                    this.fetchHashtagSearch(hastagMatch.keyword);
+                    this.fetchHashtagSearch(hashtagMatch.keyword);
                 }, 700);
+
+
+                // 검색할 해시태그 범위(start, end)를 저장
+                this.currentRange = {
+                    start: hashtagMatch.start,
+                    end: currentCursorPosition
+                };
             }
         });
     }
@@ -78,6 +85,9 @@ class HashtagSearch {
 
         // 생성된 목록을 보여주기
         this.$suggestionContainer.style.display = 'block';
+
+        // 해시태그 클릭 시 이벤트
+        this.addClickEvents();
     }
 
     // 해시태그 추천 컨테이너 숨기기
@@ -108,6 +118,47 @@ class HashtagSearch {
         $container.classList.add('hashtag-suggestions');
         this.$textarea.parentElement.append($container);
         return $container;
+    }
+
+    /**
+     * 표시된 해시태그 후보(추천)들을 클릭했을 때,
+     * 해당 태그를 실제 textarea에 삽입하기 위한 이벤트를 등록한다.
+     */
+    addClickEvents() {
+        this.$suggestionContainer
+            .querySelectorAll('.hashtag-item')
+            .forEach((item) => {
+                item.addEventListener('click', () => {
+                    // 클릭 시, data-name 속성에 담긴 해시태그 이름 삽입
+                    this.insertHashtag(item.dataset.name);
+                });
+            });
+    }
+
+    /**
+     * 추천 목록에서 해시태그를 선택(클릭)했을 때,
+     * 현재 textarea에 해당 태그를 삽입하는 함수
+     *
+     * @param {string} tagName - 선택된 태그 이름
+     */
+    insertHashtag(tagName) {
+        const text = this.$textarea.value;
+
+        // 해시태그가 시작되기 전 구간
+        const beforeHashtag = text.substring(0, this.currentRange.start);
+
+        // 해시태그가 끝난 뒤 구간
+        const afterHashtag = text.substring(this.currentRange.end);
+
+        // 새롭게 구성된 문자열 (해시태그 이름 뒤에 공백 추가)
+        const newText = `${beforeHashtag}#${tagName} ${afterHashtag}`;
+
+        // textarea에 반영
+        this.$textarea.value = newText;
+
+        // 추천 목록 숨기고 포커스 유지
+        this.hideSuggestions();
+        this.$textarea.focus();
     }
 }
 
