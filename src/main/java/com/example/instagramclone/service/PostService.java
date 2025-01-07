@@ -74,7 +74,14 @@ public class PostService {
         hashtagNames.forEach(hashtagName -> {
 
             // 일단 해시태그가 저장되어있는지 여부를 확인 - 조회해봄
-            Hashtag foundHashtag = hashtagRepository.findByName(hashtagName);
+            Hashtag foundHashtag = hashtagRepository.findByName(hashtagName)
+                    .orElseGet(() -> {  // 이메일로도, 전화번호로도, 이름으로도 로그인이 가능해짐  -> 매우 편리.
+                        Hashtag newHashtag = Hashtag.builder().name(hashtagName).build();
+                        hashtagRepository.insertHashtag(newHashtag);
+                        log.debug("new hashtag saved: {}", hashtagName);
+                        return newHashtag;
+                    })  // 일단 조회해보고 없으면(null) ~~ 대체적으로 뭘 할지
+                    ;
 
             // 해시태그 저장 명령
             if (foundHashtag == null) {
