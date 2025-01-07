@@ -26,4 +26,17 @@
         WHERE name = #{name}
     </select>
 
+    <!-- 해시태그 추천을 위한 특정 키워드의 TOP5 해시태그 이름과 게시물 수 조회하기 -->
+    <select id="searchHashTagsByKeyword" resultType="HashtagSearchResponse">
+        SELECT
+            p.name AS hashtag
+             , COUNT(ph.post_id) AS feedCount
+        FROM post_hashtags ph
+                 RIGHT OUTER JOIN hashtags p
+                                  ON ph.hashtag_id = p.id
+        WHERE p.name LIKE CONCAT(#{keyword}, '%')
+        GROUP BY p.name
+        ORDER BY feed_count DESC
+            LIMIT 5
+    </select>
 </mapper>
