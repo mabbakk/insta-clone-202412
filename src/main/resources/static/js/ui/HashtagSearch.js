@@ -10,6 +10,8 @@ class HashtagSearch {
 
         // 디바운스를 위한 타이머변수
         this.searchTimeout = null;
+
+
     }
 
     // textarea에 input이벤트 걸기
@@ -34,11 +36,10 @@ class HashtagSearch {
                     this.fetchHashtagSearch(hashtagMatch.keyword);
                 }, 700);
 
-
                 // 검색할 해시태그 범위(start, end)를 저장
                 this.currentRange = {
                     start: hashtagMatch.start,
-                    end: currentCursorPosition
+                    end: currentCursorPosition,
                 };
             }
         });
@@ -46,7 +47,6 @@ class HashtagSearch {
 
     // 서버에 검색요청을 보내는 함수
     async fetchHashtagSearch(keyword) {
-
         // 키워드가없으면 서버통신 보내지마
         if (!keyword) {
             return;
@@ -62,7 +62,6 @@ class HashtagSearch {
 
     // 서버에서 가져온 해시태그 화면에 렌더링하기
     renderSuggestions(hashtags) {
-
         // 검색결과가 없다면 컨테이너 숨기기
         if (!hashtags || !hashtags.length) {
             this.hideSuggestions();
@@ -86,8 +85,9 @@ class HashtagSearch {
         // 생성된 목록을 보여주기
         this.$suggestionContainer.style.display = 'block';
 
-        // 해시태그 클릭 시 이벤트
+        // 해시태그 클릭시 이벤트
         this.addClickEvents();
+
     }
 
     // 해시태그 추천 컨테이너 숨기기
@@ -107,9 +107,9 @@ class HashtagSearch {
         // 정규표현식으로 마지막 해시태그를 찾아내서 추출
         // 정규표현식으로 마지막 #부터 시작하는 단어(한글 포함)를 찾는다
         const match = beforeCursorText.match(/#[\w가-힣]*$/);
-        // console.log('match: ', match);
+        console.log('match: ', match);
 
-        return match ? { keyword: match[0].substring(1) } : null;
+        return match ? { keyword: match[0].substring(1), start: match.index } : null;
     }
 
     // 해시태그 추천목록을 만들 컨테이너
