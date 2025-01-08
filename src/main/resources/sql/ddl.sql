@@ -73,6 +73,21 @@ CREATE TABLE users
     INDEX idx_username (username)
 );
 
+SELECT * FROM users;
+DELETE FROM users;
+COMMIT;
+
+
+
+
+
+
+
+
+
+
+
+
 -- 특정 단어로 시작하는 해시태그 검색하기
 SELECT
     h.id
