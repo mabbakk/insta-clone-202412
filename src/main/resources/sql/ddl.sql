@@ -1,5 +1,5 @@
 -- 데이터베이스 생성
-CREATE DATABASE instagram
+CREATE DATABASE instagram_clone
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_unicode_ci;
 
@@ -50,3 +50,37 @@ CREATE TABLE post_hashtags
 CREATE INDEX idx_hashtag_name ON hashtags (name);
 CREATE INDEX idx_post_hashtags_post_id ON post_hashtags (post_id);
 CREATE INDEX idx_post_hashtags_hashtag_id ON post_hashtags (hashtag_id);
+
+
+
+
+-- 특정 단어로 시작하는 해시태그 검색하기
+SELECT
+    h.id
+     , h.name
+FROM hashtags h
+WHERE name LIKE '아%'
+LIMIT 5
+;
+
+-- 각 해시태그들이 달린 게시물 수 확인하기
+SELECT
+    hashtag_id
+     , COUNT(post_id)
+FROM post_hashtags
+GROUP BY hashtag_id
+ORDER BY hashtag_id
+;
+
+
+SELECT
+    p.name
+     , COUNT(ph.post_id) feed_count
+FROM post_hashtags ph
+         RIGHT OUTER JOIN hashtags p
+                          ON ph.hashtag_id = p.id
+WHERE p.name LIKE '아%'
+GROUP BY p.name
+ORDER BY feed_count DESC
+LIMIT 5
+;

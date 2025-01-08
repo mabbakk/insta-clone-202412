@@ -304,7 +304,7 @@ function setupNestedModalEvents() {
 // 해시태그 추천 처리
 function setupSuggestionHashtag() {
     // 해시태그 모듈을 분리해서 처리
-    const hashtagSearch = new HashtagSearch();
+    const hashtagSearch = new HashtagSearch(elements.$contentTextarea);
     hashtagSearch.init();
 }
 
