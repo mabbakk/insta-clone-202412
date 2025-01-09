@@ -1,5 +1,6 @@
 
 import {ValidationRules} from "./validation.js";    // 파일 뒤에 꼭 .js 붙이는 거 잊지 말기!
+import {debounce} from "../util/debounce.js";  // 이 debounce를 불러왔으면 아래 코드들 중 어디에 걸어야 하는지도 굉장히 중요!
 
 // 회원 가입정보를 서버에 전송하기
 async function fetchToSignUp(userData) {
@@ -31,9 +32,12 @@ function initSignUp() {
     };
 
 
+    // 디바운스가 걸린 validateField 함수
+    const debouncedValiDate = debounce(validateField, 700);
+
     const handleInput = ($input) => {
         removeErrorMessage($input.closest('.form-field'));
-        validateField($input); // 입력값 검증 함수 호출
+        debouncedValiDate($input); // 입력값 검증 함수 호출
     };
 
 
