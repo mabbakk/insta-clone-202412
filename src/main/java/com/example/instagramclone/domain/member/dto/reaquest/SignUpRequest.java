@@ -35,7 +35,7 @@ public class SignUpRequest {
     public Member toEntity() {
 
 
-        // 이메일과 휴대전화번호를 구분해서 ㅓ리
+        // 이메일과 휴대전화번호를 구분해서 처리
         String email = null;
         String phone = null;
 
