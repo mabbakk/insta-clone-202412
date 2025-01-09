@@ -77,6 +77,9 @@ SELECT * FROM users;
 DELETE FROM users;
 COMMIT;
 
+SELECT * FROM users
+WHERE phone = '01012345678';
+
 
 
 
