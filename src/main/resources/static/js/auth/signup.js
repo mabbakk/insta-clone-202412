@@ -1,5 +1,5 @@
 
-import {ValidationRules} from "./validation.js";    // 파일 뒤에 꼭 .js 붙이는 거 잊지 말기!
+import {ValidationRules, checkPasswordStrength} from "./validation.js";    // 파일 뒤에 꼭 .js 붙이는 거 잊지 말기!
 import {debounce} from "../util/debounce.js";  // 이 debounce를 불러왔으면 아래 코드들 중 어디에 걸어야 하는지도 굉장히 중요!
 
 // 회원 가입정보를 서버에 전송하기
@@ -97,7 +97,9 @@ function validateField($input) {
         if (fieldName === 'email') {
             validateEmailOrPhone($formField, inputValue);  // 에러를 띄워야 하니 $formField, 입력값을 받아와야 하니 inputValue
         } else if (fieldName === 'password') {
-
+            ValidatedPassword($formField, inputValue);
+        } else if (fieldName === 'username') {
+            validateUsername($formField, inputValue);
         }
     }
 
@@ -121,8 +123,11 @@ function showError($formField, message) {
 function removeErrorMessage($formField) {
     $formField.classList.remove('error');
     const error = $formField.querySelector('.error-message');
+    const feedback = $formField.querySelector('.password-feedback');
     if (error) error.remove();
+    if (feedback) feedback.remove();
 }
+
 
 
 // 이메일 또는 전화번호를 상세 검증
@@ -148,6 +153,65 @@ function validateEmailOrPhone($formField, inputValue) {
     }
 
 }
+
+// 비밀번호 검증 (길이, 강도 체크)
+function ValidatedPassword($formField, inputValue) {
+
+    // 길이 확인
+    if (!ValidationRules.password.patterns.length.test(inputValue)) {
+        showError($formField, ValidationRules.password.messages.length);
+    }
+
+    // 강도 체크
+    const strength = checkPasswordStrength(inputValue);
+    switch (strength) {
+        case 'weak': // 에러로 볼것임
+            showError($formField, ValidationRules.password.messages.weak);
+            break;
+        case 'medium': // 에러는 아님
+            showPasswordFeedback(
+                $formField,
+                ValidationRules.password.messages.medium,
+                'warning'
+            );
+            break;
+        case 'strong': // 에러는 아님
+            showPasswordFeedback(
+                $formField,
+                ValidationRules.password.messages.strong,
+                'success'
+            );
+            break;
+    }
+
+}
+
+
+/**
+ * 비밀번호 강도 피드백 표시
+ */
+function showPasswordFeedback($formField, message, type) {
+    const $feedback = document.createElement('span');
+    $feedback.className = `password-feedback ${type}`;   // 강도 클래스에 따라서 에러 테두리 색깔이 바뀜!
+    $feedback.textContent = message;
+    $formField.append($feedback);
+}
+
+
+/**
+ * 사용자 이름(username) 필드 검증
+ */
+function validateUsername($formField, inputValue) {
+
+    if (!ValidationRules.username.pattern.test(inputValue)) {
+        showError($formField, ValidationRules.username.message);
+    }
+
+    // 중복검사
+
+}
+
+
 
 
 //====== 메인 실행 코드 ======//
