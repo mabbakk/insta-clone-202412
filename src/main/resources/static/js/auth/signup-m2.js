@@ -1,14 +1,6 @@
 
-import { ValidationRules, checkPasswordStrength } from "./validation.js";
-import { debounce } from '../util/debounce.js';
-
-// 모든 input별로 이전 값을 저장할 객체를 만듦
-const previousValues = {
-    emailOrPhone: '',
-    name: '',
-    username: '',
-    password: ''
-};
+import {ValidationRules, checkPasswordStrength} from "./validation.js";    // 파일 뒤에 꼭 .js 붙이는 거 잊지 말기!
+import {debounce} from "../util/debounce.js";  // 이 debounce를 불러왔으면 아래 코드들 중 어디에 걸어야 하는지도 굉장히 중요!
 
 // 회원 가입정보를 서버에 전송하기
 async function fetchToSignUp(userData) {
@@ -22,17 +14,17 @@ async function fetchToSignUp(userData) {
     // alert(data.message);
     if (response.ok) window.location.href = '/'; // 로그인 페이지 이동
     else alert(data.message);
+
 }
-
-
 
 
 // 초기화 함수
 function initSignUp() {
+
     // form submit이벤트
     const $form = document.querySelector('.auth-form');
 
-    // 초기에 가입 버튼 비활성화
+    // 초기에 가입 버튼 비활성하
     const $submitButton = $form.querySelector('.auth-button');
     $submitButton.disabled = true;
 
@@ -47,8 +39,10 @@ function initSignUp() {
     // 비밀번호 숨기기 토글 활성화
     createPasswordToggle($inputs.password);
 
+
     // 디바운스가 걸린 validateField 함수
-    const debouncedValidate = debounce(async ($input) => {
+    const debouncedValidate = debounce(($input) => {
+
         // === bug fix part ===
         /*
           원인: validateField는 비동기(async)로 작동함
@@ -57,68 +51,62 @@ function initSignUp() {
           해결 방안: validateField에 await을 걸어 실행이 끝날때까지 updateSubmitButton이
                  호출되지 않고 대기하도록 만들어줌
         */
-        await validateField($input); // 가입버튼 활성화코드는 이 코드 이후에 실행해야 함
+        validateField($input);
         updateSubmitButton($inputs, $submitButton); // 가입 버튼 활성화/비활성화 처리
     }, 700);
 
-    // input 이벤트 핸들러
     const handleInput = ($input) => {
         removeErrorMessage($input.closest('.form-field'));
-
-        // 디바운스 + 비동기 검증
-        debouncedValidate($input);
+        debouncedValidate($input); // 입력값 검증 함수 호출
     };
 
-    const handleBlur = $input => {
-        const fieldName = $input.name;
-        const currentValue = $input.value.trim();
-
-        // 빈값이거나 값이 바뀐 적이 있을 때만 혹은 이전 값이랑 달라졌을 때만 검증
-        if (!currentValue || previousValues[fieldName] !== currentValue) {
-            previousValues[fieldName] = currentValue; // 이전 값 갱신
-            removeErrorMessage($input.closest('.form-field'));
-
-            // 디바운스가 아니라, blur 시점에는 바로 검증할 수도 있음
-            validateField($input);
-            updateSubmitButton($inputs, $submitButton);
-        }
-    };
 
     // 4개의 입력창에 입력 이벤트 바인딩
-    Object.values($inputs).forEach(($input) => {
+    Object.values($inputs).forEach($input => {  // 위에 객체들의 value값만 출력!
+        // $input.addEventListener('blur', e => {handleInput($input);   // 입력값 검증 함수 호출
+        // });
         $input.addEventListener('input', () => handleInput($input));
-        $input.addEventListener('blur', () => handleBlur($input));
-    });
+        // $input.addEventListener('blur', () => handleInput($input));
+
+    })
+
 
     // 폼 이벤트 핸들러 바인딩
-    $form.addEventListener('submit', (e) => {
+    $form.addEventListener('submit', e => {
         e.preventDefault(); // 폼 전송시 발생하는 새로고침 방지
 
-        const { emailOrPhone, name, username, password } = $inputs;
+        // 사용자가 입력한 모든 입력값 읽어오기
+        const emailOrPhone = document.querySelector('input[name="email"]').value;
+        const name = document.querySelector('input[name="name"]').value;
+        const username = document.querySelector('input[name="username"]').value;
+        const password = document.querySelector('input[name="password"]').value;
 
         const payload = {
-            emailOrPhone: emailOrPhone.value,
-            name: name.value,
-            username: username.value,
-            password: password.value,
+            emailOrPhone: emailOrPhone,
+            name: name,
+            username: username,
+            password: password,
         };
 
         // 서버로 데이터 전송
         fetchToSignUp(payload);
+
     });
+
 }
 
-// ==== 함수 정의 ==== //
+
+//==== 함수 정의 ====//
 // 입력값을 검증하고 에러메시지를 렌더링하는 함수
 async function validateField($input) {
 
     // 각 입력들이 유효한지 확인
     let isValid = true;
 
-    // 이게 어떤태그인지 알아오기
+    // 이게 어떤 태그인지 알아오기
     const fieldName = $input.name;
-    // 입력값 읽어오기
-    const inputValue = $input.value.trim();
+    // 빈 값 체크를 하기 위해서는 입력값을 읽어와야 한다.
+    const inputValue = $input.value.trim();    // trim() : 입력값의 공백 제거! -> 사용자가 스페이스바를 눌렀을 때 생기는 공백을 제거한다.
     // input의 부모 가져오기
     const $formField = $input.closest('.form-field');
 
@@ -126,7 +114,8 @@ async function validateField($input) {
     if (!inputValue) {
         isValid = false;
         // console.log(fieldName, ' is empty!');
-        showError($formField, ValidationRules[fieldName]?.requiredMessage); // 에러메시지 렌더링
+        showError($formField, ValidationRules[fieldName]?.requiredMessage);  // 에러메시지 렌더링
+        // null이 아닐 때!
     } else {
         // 2. 상세 체크 (패턴검증, 중복검증)
         // 2-1. 이메일, 전화번호 검증
@@ -172,6 +161,7 @@ async function fetchToCheckDuplicate(type, value) {
     return await response.json();
 
 }
+
 
 // 이메일 또는 전화번호를 상세검증
 async function validateEmailOrPhone($formField, inputValue) {
