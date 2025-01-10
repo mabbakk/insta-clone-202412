@@ -104,10 +104,13 @@ public class MemberService {
 
         String username = loginRequest.getUsername();
 
-        Member foundMember = memberRepository.findByEmail(username)
-                .orElseThrow(
-                        () -> new MemberException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다.")
-                ); // 조회가 실패했다면 예외 발생
+        Member foundMember = memberRepository.findByUsername(username)
+                .orElseGet(() -> memberRepository.findByEmail(username)  // 만약 위에서 발견이 안 되면 다시 조회하겠다.
+                    .orElseGet(() -> memberRepository.findByPhone(username)
+                            .orElseThrow(
+                                    () -> new MemberException(ErrorCode.MEMBER_NOT_FOUND)
+                            )));
+
 
         // 사용자가 입력한 패스워드와 DB에 저장된 패스워드를 추출
         String inputPassword = loginRequest.getPassword();
