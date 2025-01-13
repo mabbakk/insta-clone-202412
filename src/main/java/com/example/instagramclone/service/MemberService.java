@@ -6,6 +6,7 @@ import com.example.instagramclone.domain.member.dto.response.DuplicateCheckRespo
 import com.example.instagramclone.domain.member.entity.Member;
 import com.example.instagramclone.exception.ErrorCode;
 import com.example.instagramclone.exception.MemberException;
+import com.example.instagramclone.jwt.JwtTokenProvider;
 import com.example.instagramclone.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,8 @@ import java.util.Map;
 public class MemberService {
 
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
     private final MemberRepository memberRepository;
 
     // 회원가입 중간처리
@@ -100,17 +103,17 @@ public class MemberService {
         3. 존재한다면 회원정보를 데이터베이스에서 받아와서 비밀번호를 꺼내옴
         4. 패스워드 일치를 검사
      */
+    @Transactional(readOnly = true)
     public Map<String, Object> authenticate(LoginRequest loginRequest) {
 
         String username = loginRequest.getUsername();
 
         Member foundMember = memberRepository.findByUsername(username)
-                .orElseGet(() -> memberRepository.findByEmail(username)  // 만약 위에서 발견이 안 되면 다시 조회하겠다.
-                    .orElseGet(() -> memberRepository.findByPhone(username)
-                            .orElseThrow(
-                                    () -> new MemberException(ErrorCode.MEMBER_NOT_FOUND)
-                            )));
-
+                .orElseGet(() -> memberRepository.findByEmail(username)
+                        .orElseGet(() -> memberRepository.findByPhone(username)
+                                .orElseThrow(
+                                        () -> new MemberException(ErrorCode.MEMBER_NOT_FOUND)
+                                )));
 
         // 사용자가 입력한 패스워드와 DB에 저장된 패스워드를 추출
         String inputPassword = loginRequest.getPassword();
@@ -122,12 +125,11 @@ public class MemberService {
             throw new MemberException(ErrorCode.INVALID_PASSWORD);
         }
 
-        // 로그인이 성공했을 때 JSON 생성
+        // 로그인이 성공했을 때 JSON 생성 (액세스토큰을 포함)
         return Map.of(
                 "message", "로그인에 성공했습니다.",
-                "username", foundMember.getUsername()
+                "username", foundMember.getUsername(),
+                "accessToken", jwtTokenProvider.createAccessToken(username)
         );
     }
-
-
 }
