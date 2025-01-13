@@ -22,6 +22,7 @@ public class AuthController {
 
     private final MemberService memberService;
 
+    // 회원가입 요청
     @PostMapping("/signup")
     public ResponseEntity<Map<String, Object>> signUp(@RequestBody @Valid SignUpRequest signUpRequest) {
         log.info("request for signup: {}", signUpRequest.getUsername());
@@ -60,23 +61,41 @@ public class AuthController {
 
         Map<String, Object> responseMap = memberService.authenticate(loginRequest);
 
+        /*
+         로그인이 성공하면 클라이언트에게 2가지 인증정보를 전달해야 한다.
 
-        /* 로그인이 성공하면 클라이언트엑 2가지 인증 정보를 전달해야 한다.
-
-        첫 번째는 API 요청을 위한 토큰 정보를 JSON에 담아 전달하고
-        두 번째는 페이지 라우팅 요청을 위한 쿠키를 구워서 전달해야 함.
+         첫번째는 API요청을 위한 토큰정보를 JSON에 담아 전달하고
+         두번째는 페이지 라우팅 요청을 위한 쿠키를 구워서 전달해야 함.
          */
-
-        Cookie cookie = new Cookie("accessToken", (String) responseMap.get("accessToken"));  // 쿠키에는 Strind밖에 못 담음.
-        // 쿠키의 수명, 사용 경로, 보안 등을 설정
-        cookie.setMaxAge(60*60);  // 단위 : 초
+        Cookie cookie = new Cookie("accessToken", (String) responseMap.get("accessToken"));
+        // 쿠키의 수명, 사용경로, 보안 등을 설정
+        cookie.setMaxAge(60 * 60); // 단위: 초
         cookie.setPath("/");
-        cookie.setHttpOnly(true);  // 보안 설정 - 자바스크립트로는 쿠키에 접근 불가
+        cookie.setHttpOnly(true); // 보안설정 - 자바스크립트로는 쿠키에 접근 불가
 
         // 쿠키를 클라이언트에 전송
         response.addCookie(cookie);
 
         return ResponseEntity.ok().body(responseMap);
+    }
+
+    // 로그아웃 처리 API
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+
+        // 쿠키 무효화
+        Cookie cookie = new Cookie("accessToken", null);
+        // 쿠키의 수명, 사용경로, 보안 등을 설정
+        cookie.setMaxAge(0); // 단위: 초
+        cookie.setPath("/");
+        cookie.setHttpOnly(true); // 보안설정 - 자바스크립트로는 쿠키에 접근 불가
+
+        // 쿠키를 클라이언트에 전송
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok().body(Map.of(
+                "message", "로그아웃이 처리되었습니다."
+        ));
     }
 
 }
