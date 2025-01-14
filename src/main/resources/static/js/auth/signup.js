@@ -29,6 +29,7 @@ async function fetchToSignUp(userData) {
 
 // 초기화 함수
 function initSignUp() {
+
     // form submit이벤트
     const $form = document.querySelector('.auth-form');
 
