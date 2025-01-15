@@ -74,13 +74,87 @@ CREATE TABLE users
 );
 
 SELECT * FROM users;
+
 DELETE FROM users;
 COMMIT;
 
 SELECT * FROM users
 WHERE phone = '01012345678';
 
+COMMIT;
 
+
+
+SELECT * FROM posts;
+SELECT * FROM hashtags;
+SELECT * FROM post_hashtags;
+
+
+-- 기존 피드 와 해시태그 모두 삭제
+DELETE FROM post_hashtags;
+DELETE FROM hashtags;
+DELETE FROM posts;
+
+COMMIT;
+
+-- posts 테이블 수정
+ALTER TABLE posts
+    DROP COLUMN writer, -- 기존 writer 컬럼 제거
+    ADD COLUMN member_id BIGINT NOT NULL, -- 회원 ID 컬럼 추가
+    ADD CONSTRAINT fk_posts_member -- FK 제약조건 추가
+        FOREIGN KEY (member_id)
+            REFERENCES users (id)
+            ON DELETE CASCADE;
+
+-- 인덱스 추가
+CREATE INDEX idx_posts_member_id ON posts (member_id);
+
+SELECT
+    p.*
+     , u.username
+     , u.profile_image_url
+FROM posts p
+         JOIN users u
+              ON p.member_id = u.id
+;
+
+
+SELECT * FROM users
+WHERE username = 'kitty111';
+
+SELECT * FROM posts;
+
+
+
+SELECT
+    COUNT (*)
+FROM posts
+WHERE member_id = (
+    SELECT id
+    FROM users
+    WHERE username = 'kitty111'
+);
+
+
+
+-- 특정 회원의 피드의 id와 대표 이미지 목록을 조회
+SELECT
+    p.id
+     , pi.image_url
+FROM posts p
+         INNER JOIN (
+    SELECT post_id, image_url
+    FROM post_images
+    WHERE image_order = 1
+) pi
+                    ON p.id = pi.post_id
+WHERE p.member_id = (
+    SELECT id
+    FROM users
+    WHERE username = 'mamel'
+)
+ORDER BY p.created_at DESC
+;
 
 
 
@@ -121,3 +195,8 @@ GROUP BY p.name
 ORDER BY feed_count DESC
 LIMIT 5
 ;
+
+
+
+
+

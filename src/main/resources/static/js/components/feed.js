@@ -56,7 +56,7 @@ function truncateContent(writer, content, maxLength = 20) {
     // 1. 먼저 텍스트 길이 체크
     if (content.length <= maxLength) {
         return `
-      <a href="#" class="post-username">${writer}</a>
+      <a href="/${writer}" class="post-username">${writer}</a>
       <span class="post-caption">${convertHashtagsToLinks(content)}</span>
     `;
     }
@@ -65,7 +65,7 @@ function truncateContent(writer, content, maxLength = 20) {
     const truncatedContent = content.substring(0, maxLength);
 
     return `
-    <a href="#" class="post-username">${writer}</a>
+    <a href="/${writer}" class="post-username">${writer}</a>
     <span class="post-caption post-caption-truncated">
       <span class="truncated-text">${convertHashtagsToLinks(truncatedContent)}...</span>
       <span class="full-text" style="display: none;">${convertHashtagsToLinks(content)}</span>
@@ -76,7 +76,7 @@ function truncateContent(writer, content, maxLength = 20) {
 
 
 // 한개의 피드를 렌더링하는 함수
-function createFeedItem({ writer, content, images, createdAt }) {
+function createFeedItem({ username, profileImageUrl, content, images, createdAt }) {
 
     // const makeImageTags = (images) => {
     //   let imgTag = '';
@@ -91,12 +91,12 @@ function createFeedItem({ writer, content, images, createdAt }) {
       <div class="post-header">
         <div class="post-user-info">
           <div class="post-profile-image">
-            <img src="/images/default-profile.svg" alt="프로필 이미지">
+            <img src="${profileImageUrl || '/images/default-profile.svg'}" alt="프로필 이미지">
           </div>
           <div class="post-user-details">
-            <a href="#" class="post-username">
+            <a href="/${username}" class="post-username">
                 <!--      작성자 이름 배치      -->
-                ${writer}
+                ${username}
             </a>
           </div>
         </div>
@@ -168,7 +168,7 @@ function createFeedItem({ writer, content, images, createdAt }) {
       <div class="post-content">
         <div class="post-text">
             <!--     피드 내용     -->
-            ${truncateContent(writer, content)}
+            ${truncateContent(username, content)}
         </div>
         <div class="post-time">
             <!--      피드 생성 시간      -->
@@ -191,16 +191,17 @@ function createFeedItem({ writer, content, images, createdAt }) {
 async function renderFeed() {
     // 피드 데이터를 서버로부터 불러오기
     const feedList = await fetchFeeds();
+    console.log(feedList);
 
     // feed html 생성
     $feedContainer.innerHTML = feedList.map((feed) => createFeedItem(feed)).join('');
 
     // 각 피드의 이미지 슬라이드에 각각 캐러셀 객체를 적용
     // 1. 피드의 모든 캐러셀 컨테이너를 가져옴
-    const $caroulselContainerList = [...document.querySelectorAll('.carousel-container')];
+    const $carouselContainerList = [...document.querySelectorAll('.carousel-container')];
 
     // 2. 각각 캐러셀매니저를 걸어줌
-    $caroulselContainerList.forEach($carousel => {
+    $carouselContainerList.forEach($carousel => {
 
         // 이미지가 단 한개인 슬라이드에서는 이전, 다음버튼이 없어서 에러가 나는 상황
         const $images = [...$carousel.querySelectorAll('.carousel-track img')];

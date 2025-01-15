@@ -1,3 +1,4 @@
+import {fetchWithAuth} from "../util/api.js";
 
 class HashtagSearch {
     constructor($textarea) {
@@ -52,7 +53,7 @@ class HashtagSearch {
             return;
         }
 
-        const response = await fetch(`/api/hashtags/search?keyword=${keyword}`);
+        const response = await fetchWithAuth(`/api/hashtags/search?keyword=${keyword}`);
         const hashtags = await response.json();
         // console.log(hashtags);
 

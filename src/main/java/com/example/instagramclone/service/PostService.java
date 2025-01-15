@@ -2,11 +2,15 @@ package com.example.instagramclone.service;
 
 import com.example.instagramclone.domain.hashtag.entity.Hashtag;
 import com.example.instagramclone.domain.hashtag.entity.PostHashtag;
+import com.example.instagramclone.domain.member.entity.Member;
 import com.example.instagramclone.domain.post.dto.request.PostCreate;
 import com.example.instagramclone.domain.post.dto.response.PostResponse;
 import com.example.instagramclone.domain.post.entity.Post;
 import com.example.instagramclone.domain.post.entity.PostImage;
+import com.example.instagramclone.exception.ErrorCode;
+import com.example.instagramclone.exception.MemberException;
 import com.example.instagramclone.repository.HashtagRepository;
+import com.example.instagramclone.repository.MemberRepository;
 import com.example.instagramclone.repository.PostRepository;
 import com.example.instagramclone.util.FileUploadUtil;
 import com.example.instagramclone.util.HashtagUtil;
@@ -27,15 +31,18 @@ public class PostService {
 
     private final PostRepository postRepository; // db에 피드내용 저장, 이미지저장
     private final HashtagRepository hashtagRepository; // 해시태그 db에 저장
+    private final MemberRepository memberRepository; // 사용자 정보 가져오기
 
     private final FileUploadUtil fileUploadUtil; // 로컬서버에 이미지 저장
     private final HashtagUtil hashtagUtil; // 해시태그 추출기
 
     // 피드 목록조회 중간처리
-    @Transactional(readOnly = true)  // 조회 최적화 - 조회에서만!!
+    @Transactional(readOnly = true)
     public List<PostResponse> findAllFeeds() {
         // 전체 피드 조회
-        return postRepository.findAll()
+        List<Post> all = postRepository.findAll();
+        log.info("find all feeds: {}", all);
+        return all
                 .stream()
                 .map(feed -> {
                     feed.setImages(postRepository.findImagesByPostId(feed.getId()));
@@ -45,12 +52,22 @@ public class PostService {
     }
 
 
+
     // 피드 생성 DB에 가기 전 후 중간처리
     @Transactional
-    public Long createFeed(PostCreate postCreate) {
+    public Long createFeed(PostCreate postCreate, String username) {
+
+        // 유저의 이름을 통해 해당 유저의 ID를 구함
+        Member foundMember = memberRepository.findByUsername(username)
+                .orElseThrow(
+                        () -> new MemberException(ErrorCode.MEMBER_NOT_FOUND)
+                );
 
         // entity 변환
         Post post = postCreate.toEntity();
+
+        // 사용자의 ID를 세팅해줘야 함 <- 이걸 어케구함?
+        post.setMemberId(foundMember.getId());
 
         // 피드게시물을 posts테이블에 insert
         postRepository.saveFeed(post);
@@ -78,20 +95,14 @@ public class PostService {
 
             // 일단 해시태그가 저장되어있는지 여부를 확인 - 조회해봄
             Hashtag foundHashtag = hashtagRepository.findByName(hashtagName)
-                    .orElseGet(() -> {  // 이메일로도, 전화번호로도, 이름으로도 로그인이 가능해짐  -> 매우 편리.
+                    .orElseGet(() -> {
                         Hashtag newHashtag = Hashtag.builder().name(hashtagName).build();
                         hashtagRepository.insertHashtag(newHashtag);
                         log.debug("new hashtag saved: {}", hashtagName);
                         return newHashtag;
-                    })  // 일단 조회해보고 없으면(null) ~~ 대체적으로 뭘 할지
+                    }) // 일단 조회해보고 없으면(null)~~~ 대체적으로 뭘할지
                     ;
 
-            // 해시태그 저장 명령
-            if (foundHashtag == null) {
-                foundHashtag = Hashtag.builder().name(hashtagName).build();
-                hashtagRepository.insertHashtag(foundHashtag);
-                log.debug("new hashtag saved: {}", hashtagName);
-            }
             // 3. 해시태그와 피드를 연결해서 연결테이블에 저장
             PostHashtag postHashtag = PostHashtag.builder()
                     .postId(post.getId())
